@@ -57,7 +57,7 @@
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.3
+    Version: 1.4
     Läuft in Windows PowerShell 5.1 auf einem Exchange Server (Exchange Cmdlets nötig).
 #>
 #Requires -Version 5.1
@@ -118,21 +118,32 @@ function Send-Alert {
 
 Write-Log "Start als $env:USERDOMAIN\$env:USERNAME"
 
-# Exchange Cmdlets laden
-# Als SYSTEM über das lokale Snap-in (kein Remote PowerShell Aufbau), sonst über die Exchange Management Shell
-try {
-    if ($env:USERNAME -eq "$env:COMPUTERNAME`$") {
-        Add-PSSnapin -Name Microsoft.Exchange.Management.PowerShell.SnapIn -ErrorAction Stop
-        Write-Log "  Exchange Snap-in geladen"
-    }
-    else {
-        . "$env:ExchangeInstallPath\bin\RemoteExchange.ps1" | Out-Null
-        Connect-ExchangeServer -auto -ClientApplication:ManagementShell | Out-Null
-        Write-Log "  Exchange Management Shell verbunden"
-    }
+# Exchange Cmdlets laden, falls nicht schon vorhanden (z.B. Aufruf aus der Exchange Management Shell)
+# Als SYSTEM über das lokale Snap-in (kein Remote PowerShell Aufbau), sonst über RemoteExchange.ps1
+# -WhatIf gilt nur für Mails und Statusdatei, nicht für das Laden der Cmdlets
+if (Get-Command -Name Get-Queue -ErrorAction SilentlyContinue) {
+    Write-Log "  Exchange Cmdlets bereits geladen"
 }
-catch {
-    Write-Log "  Exchange Cmdlets konnten nicht geladen werden: $($_.Exception.Message)"
+else {
+    $SavedWhatIf = $WhatIfPreference
+    $WhatIfPreference = $false
+    try {
+        if ($env:USERNAME -eq "$env:COMPUTERNAME`$") {
+            Add-PSSnapin -Name Microsoft.Exchange.Management.PowerShell.SnapIn -ErrorAction Stop
+            Write-Log "  Exchange Snap-in geladen"
+        }
+        else {
+            . "$env:ExchangeInstallPath\bin\RemoteExchange.ps1" *> $null
+            Connect-ExchangeServer -auto -ClientApplication:ManagementShell *> $null
+            Write-Log "  Exchange Management Shell verbunden"
+        }
+    }
+    catch {
+        Write-Log "  Exchange Cmdlets konnten nicht geladen werden: $($_.Exception.Message)"
+    }
+    finally {
+        $WhatIfPreference = $SavedWhatIf
+    }
 }
 if (-not (Get-Command -Name Get-Queue -ErrorAction SilentlyContinue)) {
     Write-Log "  Get-Queue nicht verfügbar, Exchange Prüfungen schlagen fehl"
