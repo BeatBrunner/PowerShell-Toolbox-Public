@@ -31,7 +31,7 @@
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.2
+    Version: 1.3
     Voraussetzung: PowerShell Remoting (WinRM) auf den Servern, Leserechte auf Registry und Application Log.
 #>
 [CmdletBinding()]
@@ -103,7 +103,9 @@ $Result = @(Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock
     Sort-Object -Property Server |
     Select-Object -Property PSComputerName, Server, LastBoot, Uptime_h, Phase, Mark24h, Mark36h, OS, Build, KB, KBInstalled, EpmapCap, Event1006, LastEvent)
 
-$Result | Select-Object -Property * -ExcludeProperty PSComputerName | Format-Table -AutoSize
+# Zwei Tabellen, damit alles in ein normales Konsolenfenster passt (CSV enthält alle Spalten)
+$Result | Format-Table -Property Server, LastBoot, Uptime_h, Phase, Mark24h, Mark36h -AutoSize | Out-Host
+$Result | Format-Table -Property Server, OS, Build, KB, KBInstalled, EpmapCap, Event1006, LastEvent -AutoSize | Out-Host
 
 # Nicht erreichbare Server melden
 $Reached = @($Result | ForEach-Object { $_.PSComputerName })
