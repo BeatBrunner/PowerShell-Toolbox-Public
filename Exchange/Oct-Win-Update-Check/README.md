@@ -86,7 +86,7 @@ Ausgabe in zwei Tabellen (Zeitfenster und Update-Stand), die CSV enthält alle S
 | `Phase` | `vor 24h`, `KRITISCH (24-36h)` oder `nach 36h` seit dem Boot |
 | `Mark24h`, `Mark36h` | Zeitpunkte, an denen das kritische Zeitfenster beginnt und endet |
 | `OS`, `Build` | Windows Server Version und Build inkl. Update-Stand, z.B. 17763.1234 |
-| `KB`, `KBInstalled` | Betroffenes Oktober 2026 Update dieser Version und ob es installiert ist: 2016 KB5126868 (noch nicht von Microsoft bestätigt), 2019 KB5126651, 2022 KB5126655, 2025 KB5126646. `unbekannt` bei einer anderen Windows Version. Ersetzt ein späteres kumulatives Update das Oktober-Update, kann hier wieder `False` stehen. |
+| `KB`, `KBInstalled` | Betroffenes Oktober 2026 Update dieser Version und ob es installiert ist: 2016 KB5126868, 2019 KB5126651, 2022 KB5126655, 2025 KB5126646. `unbekannt` bei einer anderen Windows Version. Ersetzt ein späteres kumulatives Update das Oktober-Update, kann hier wieder `False` stehen. |
 | `EpmapCap` | Registry-Wert `HKLM:\SOFTWARE\Microsoft\Rpc\EpmapSavedContextCap`, erwartet wird 65536 |
 | `Event1006`, `LastEvent` | Anzahl Event 1006 MapiExceptionMdbOffline seit dem Boot und Zeitpunkt des letzten |
 

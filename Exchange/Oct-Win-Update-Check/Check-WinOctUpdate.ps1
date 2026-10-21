@@ -7,7 +7,7 @@
     - Letzter Boot, Uptime und Phase im kritischen Zeitfenster (24 bis 36 Stunden nach dem Boot)
     - Registry-Wert HKLM:\SOFTWARE\Microsoft\Rpc\EpmapSavedContextCap (Sollwert 65536)
     - Windows Server Version und ob das betroffene Oktober 2026 Update dieser Version installiert ist:
-      2016 KB5126868 (noch nicht von Microsoft bestätigt), 2019 KB5126651, 2022 KB5126655, 2025 KB5126646
+      2016 KB5126868, 2019 KB5126651, 2022 KB5126655, 2025 KB5126646
     - Anzahl Event 1006 mit MapiExceptionMdbOffline bzw. ec=1142 seit dem Boot
 
     Hinweis: Die Prüfung läuft über Get-HotFix. Ersetzt ein späteres kumulatives Update das
@@ -47,7 +47,7 @@ $ErrorActionPreference = 'Stop'
 
 # Betroffenes Oktober 2026 Update pro Windows Server Build
 $KBByBuild = @{
-    '14393' = @{ OS = 'Server 2016'; KB = 'KB5126868' }   # noch nicht von Microsoft bestätigt
+    '14393' = @{ OS = 'Server 2016'; KB = 'KB5126868' }
     '17763' = @{ OS = 'Server 2019'; KB = 'KB5126651' }
     '20348' = @{ OS = 'Server 2022'; KB = 'KB5126655' }
     '26100' = @{ OS = 'Server 2025'; KB = 'KB5126646' }
