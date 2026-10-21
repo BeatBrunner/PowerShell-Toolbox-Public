@@ -57,7 +57,7 @@
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.2
+    Version: 1.3
     Läuft in Windows PowerShell 5.1 auf einem Exchange Server (Exchange Cmdlets nötig).
 #>
 #Requires -Version 5.1
@@ -138,7 +138,8 @@ if (-not (Get-Command -Name Get-Queue -ErrorAction SilentlyContinue)) {
     Write-Log "  Get-Queue nicht verfügbar, Exchange Prüfungen schlagen fehl"
 }
 
-# Erst nach dem Laden der Exchange Cmdlets, RemoteExchange.ps1 ist nicht StrictMode-fest
+# Erst nach dem Laden der Exchange Cmdlets, RemoteExchange.ps1 ist nicht StrictMode-fest.
+# Exchange Cmdlets über die Remote-Session ignorieren $ErrorActionPreference, darum unten überall -ErrorAction Stop
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -152,7 +153,7 @@ foreach ($s in $Servers) {
 
     # 1. Event 1006 MapiExceptionMdbOffline (Symptom Windows Oktober Update)
     try {
-        $ev = @(Get-WinEvent -ComputerName $s -FilterHashtable @{LogName = 'Application'; Id = 1006; StartTime = $Since} |
+        $ev = @(Get-WinEvent -ComputerName $s -FilterHashtable @{LogName = 'Application'; Id = 1006; StartTime = $Since} -ErrorAction Stop |
               Where-Object { $_.Message -match 'MapiExceptionMdbOffline|ec=1142' })
         $evCount = $ev.Count
         if ($evCount -gt 0) { $Problems += "$s : $evCount x Event 1006 MapiExceptionMdbOffline" }
@@ -166,7 +167,7 @@ foreach ($s in $Servers) {
 
     # 2. Queues
     try {
-        $q = @(Get-Queue -Server $s)
+        $q = @(Get-Queue -Server $s -ErrorAction Stop)
         if ($q.Count -gt 0) { $qMax = ($q | Measure-Object -Property MessageCount -Maximum).Maximum }
         foreach ($item in $q | Where-Object { $_.MessageCount -gt $QueueMax }) {
             $Problems += "$s : Queue $($item.Identity) hat $($item.MessageCount) Mails (Status $($item.Status))"
@@ -176,7 +177,7 @@ foreach ($s in $Servers) {
 
     # 3. Exchange Dienste
     try {
-        foreach ($item in Test-ServiceHealth -Server $s | Where-Object { -not $_.RequiredServicesRunning }) {
+        foreach ($item in Test-ServiceHealth -Server $s -ErrorAction Stop | Where-Object { -not $_.RequiredServicesRunning }) {
             $svc = 'PROBLEM'
             $Problems += "$s : Dienste gestoppt ($($item.Role)): $($item.ServicesNotRunning -join ', ')"
         }
@@ -185,7 +186,7 @@ foreach ($s in $Servers) {
 
     # 4. Datenbankkopien
     try {
-        $copies = @(Get-MailboxDatabaseCopyStatus -Server $s)
+        $copies = @(Get-MailboxDatabaseCopyStatus -Server $s -ErrorAction Stop)
         $db = ($copies | ForEach-Object { "$($_.DatabaseName)=$($_.Status)" }) -join ' '
         foreach ($item in $copies | Where-Object { "$($_.Status)" -notin 'Mounted', 'Healthy' }) {
             $Problems += "$s : DB Kopie $($item.Name) Status $($item.Status)"
@@ -195,7 +196,7 @@ foreach ($s in $Servers) {
 
     # 5. MAPI Test (erkennt Datenbanken, die mounted sind, aber nicht antworten)
     try {
-        foreach ($item in Test-MAPIConnectivity -Server $s | Where-Object { "$($_.Result)" -ne 'Success' }) {
+        foreach ($item in Test-MAPIConnectivity -Server $s -ErrorAction Stop | Where-Object { "$($_.Result)" -ne 'Success' }) {
             $mapi = 'PROBLEM'
             $Problems += "$s : MAPI Test $($item.Database) $($item.Result) $($item.Error)"
         }

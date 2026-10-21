@@ -93,7 +93,13 @@ Darunter folgt pro Server eine Bewertung: rot bei Event 1006, gelb wenn EpmapSav
 
 ## 4. ExMonitor.ps1: manuell testen
 
-In der **Exchange Management Shell** (als Administrator) ausführen.
+In der **Exchange Management Shell** (als Administrator) ausführen. Die Beispielwerte `EX-Server01`, `admin@contoso.com` usw. durch die eigenen Servernamen und Adressen ersetzen. Alle Exchange Server der Organisation lassen sich direkt übergeben:
+
+```powershell
+.\ExMonitor.ps1 -Servers (Get-ExchangeServer).Name -To admin@contoso.com -From exmonitor@contoso.com -WhatIf
+```
+
+Mit falschen Servernamen meldet jede Prüfung einen Fehler ("Exchange server ... wasn't found") und der Status ist PROBLEM.
 
 Schritt 1, nur prüfen, ohne Mail:
 
@@ -128,7 +134,7 @@ Weitere Parameter:
 
 ## 5. Register-ExMonitorTask.ps1: geplante Aufgabe einrichten
 
-In einer PowerShell **als Administrator** (keine Exchange Management Shell nötig).
+In einer PowerShell **als Administrator** (keine Exchange Management Shell nötig). In der Exchange Management Shell geht auch `-Servers (Get-ExchangeServer).Name`. Die Serverliste wird beim Einrichten fest in die Aufgabe geschrieben. Kommt ein Server dazu, das Skript erneut ausführen.
 
 Schritt 1, anzeigen was eingerichtet würde:
 

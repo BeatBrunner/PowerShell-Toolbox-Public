@@ -52,7 +52,7 @@
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.0
+    Version: 1.1
     Als Administrator auf dem Exchange Server ausführen, der die Überwachung übernimmt.
     Windows Server 2016 oder neuer (Wiederholung ohne Enddatum).
 #>
@@ -118,13 +118,13 @@ try {
     $Existing = Get-ScheduledTask -TaskName $TaskName -TaskPath $TaskPath -ErrorAction SilentlyContinue
     if ($Existing) {
         $BackupFile = Join-Path -Path $OutputPath -ChildPath "${TaskName}_Backup_$Stamp.xml"
-        Export-ScheduledTask -TaskName $TaskName -TaskPath $TaskPath | Set-Content -Path $BackupFile -Encoding UTF8 -WhatIf:$false
+        Export-ScheduledTask -TaskName $TaskName -TaskPath $TaskPath -ErrorAction Stop | Set-Content -Path $BackupFile -Encoding UTF8 -WhatIf:$false
         Write-Host "Bestehende Aufgabe gesichert: $BackupFile"
     }
 
     if ($PSCmdlet.ShouldProcess("$TaskPath$TaskName", 'Geplante Aufgabe registrieren')) {
         Register-ScheduledTask -TaskName $TaskName -TaskPath $TaskPath -Action $Action -Trigger $Trigger -Principal $Principal -Settings $Settings `
-            -Description 'Exchange Überwachung (ExMonitor.ps1), alle 15 Minuten' -Force | Out-Null
+            -Description 'Exchange Überwachung (ExMonitor.ps1), alle 15 Minuten' -Force -ErrorAction Stop | Out-Null
         Write-Host "Aufgabe registriert. Test: Start-ScheduledTask -TaskPath '$TaskPath' -TaskName '$TaskName'" -ForegroundColor Green
     }
 }
