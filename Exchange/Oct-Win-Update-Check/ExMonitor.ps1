@@ -50,13 +50,14 @@
     Führt alle Prüfungen aus, sendet aber keine Mail und schreibt keine Statusdatei.
 
 .EXAMPLE
-    Geplante Aufgabe (als SYSTEM, alle 15 Minuten):
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Admin\Scripts\ExMonitor\ExMonitor.ps1" -Servers EX-Server01,EX-Server02 -To admin@contoso.com -From exmonitor@contoso.com
+    .\Register-ExMonitorTask.ps1 -Servers EX-Server01, EX-Server02 -To admin@contoso.com -From exmonitor@contoso.com
+    Richtet die geplante Aufgabe ein (als SYSTEM, alle 15 Minuten). Bei manueller Einrichtung
+    powershell.exe mit -Command aufrufen, nicht mit -File, sonst kommt -Servers als ein String an.
 
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.1
+    Version: 1.2
     Läuft in Windows PowerShell 5.1 auf einem Exchange Server (Exchange Cmdlets nötig).
 #>
 #Requires -Version 5.1
