@@ -6,8 +6,12 @@
     Fragt per Invoke-Command auf jedem Server ab:
     - Letzter Boot, Uptime und Phase im kritischen Zeitfenster (24 bis 36 Stunden nach dem Boot)
     - Registry-Wert HKLM:\SOFTWARE\Microsoft\Rpc\EpmapSavedContextCap (Sollwert 65536)
-    - Ob KB5126651 installiert ist
+    - Windows Server Version und ob das betroffene Oktober 2026 Update dieser Version installiert ist:
+      2016 KB5126868 (noch nicht von Microsoft bestätigt), 2019 KB5126651, 2022 KB5126655, 2025 KB5126646
     - Anzahl Event 1006 mit MapiExceptionMdbOffline bzw. ec=1142 seit dem Boot
+
+    Hinweis: Die Prüfung läuft über Get-HotFix. Ersetzt ein späteres kumulatives Update das
+    Oktober-Update, kann KBInstalled wieder False anzeigen.
 
     Das Ergebnis wird als Tabelle angezeigt, pro Server bewertet und als CSV exportiert.
     Das Skript ändert nichts an den Servern.
@@ -27,7 +31,7 @@
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.1
+    Version: 1.2
     Voraussetzung: PowerShell Remoting (WinRM) auf den Servern, Leserechte auf Registry und Application Log.
 #>
 [CmdletBinding()]
@@ -41,11 +45,34 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Betroffenes Oktober 2026 Update pro Windows Server Build
+$KBByBuild = @{
+    '14393' = @{ OS = 'Server 2016'; KB = 'KB5126868' }   # noch nicht von Microsoft bestätigt
+    '17763' = @{ OS = 'Server 2019'; KB = 'KB5126651' }
+    '20348' = @{ OS = 'Server 2022'; KB = 'KB5126655' }
+    '26100' = @{ OS = 'Server 2025'; KB = 'KB5126646' }
+}
+
 $ScriptBlock = {
-    $boot   = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+    param($KBByBuild)
+
+    $os     = Get-CimInstance -ClassName Win32_OperatingSystem
+    $boot   = $os.LastBootUpTime
     $uptime = ((Get-Date) - $boot).TotalHours
     $epmap  = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Rpc' -Name EpmapSavedContextCap -ErrorAction SilentlyContinue).EpmapSavedContextCap
-    $kb     = [bool](Get-HotFix -Id KB5126651 -ErrorAction SilentlyContinue)
+    $ubr    = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name UBR -ErrorAction SilentlyContinue).UBR
+
+    $map = $KBByBuild["$($os.BuildNumber)"]
+    if ($map) {
+        $osName = $map.OS
+        $kbId   = $map.KB
+        $kb     = [bool](Get-HotFix -Id $kbId -ErrorAction SilentlyContinue)
+    }
+    else {
+        $osName = "Build $($os.BuildNumber)"
+        $kbId   = '-'
+        $kb     = 'unbekannt'
+    }
     $ev     = @(Get-WinEvent -FilterHashtable @{LogName = 'Application'; Id = 1006; StartTime = $boot} -ErrorAction SilentlyContinue |
                 Where-Object { $_.Message -match 'MapiExceptionMdbOffline|ec=1142' })
 
@@ -54,24 +81,27 @@ $ScriptBlock = {
              else                    { 'nach 36h' }
 
     [PSCustomObject]@{
-        Server    = $env:COMPUTERNAME
-        LastBoot  = $boot.ToString('dd.MM.yyyy HH:mm')
-        Uptime_h  = [math]::Round($uptime, 1)
-        Phase     = $phase
-        Mark24h   = $boot.AddHours(24).ToString('dd.MM. HH:mm')
-        Mark36h   = $boot.AddHours(36).ToString('dd.MM. HH:mm')
-        KB5126651 = $kb
-        EpmapCap  = $epmap
-        Event1006 = $ev.Count
-        LastEvent = if ($ev.Count -gt 0) { $ev[0].TimeCreated.ToString('dd.MM.yyyy HH:mm') } else { '' }
+        Server      = $env:COMPUTERNAME
+        LastBoot    = $boot.ToString('dd.MM.yyyy HH:mm')
+        Uptime_h    = [math]::Round($uptime, 1)
+        Phase       = $phase
+        Mark24h     = $boot.AddHours(24).ToString('dd.MM. HH:mm')
+        Mark36h     = $boot.AddHours(36).ToString('dd.MM. HH:mm')
+        OS          = $osName
+        Build       = "$($os.BuildNumber).$ubr"
+        KB          = $kbId
+        KBInstalled = $kb
+        EpmapCap    = $epmap
+        Event1006   = $ev.Count
+        LastEvent   = if ($ev.Count -gt 0) { $ev[0].TimeCreated.ToString('dd.MM.yyyy HH:mm') } else { '' }
     }
 }
 
 # Nicht erreichbare Server landen in $RemoteErrors statt das Skript abzubrechen
 $RemoteErrors = @()
-$Result = @(Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ErrorAction SilentlyContinue -ErrorVariable RemoteErrors |
+$Result = @(Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ArgumentList $KBByBuild -ErrorAction SilentlyContinue -ErrorVariable RemoteErrors |
     Sort-Object -Property Server |
-    Select-Object -Property PSComputerName, Server, LastBoot, Uptime_h, Phase, Mark24h, Mark36h, KB5126651, EpmapCap, Event1006, LastEvent)
+    Select-Object -Property PSComputerName, Server, LastBoot, Uptime_h, Phase, Mark24h, Mark36h, OS, Build, KB, KBInstalled, EpmapCap, Event1006, LastEvent)
 
 $Result | Select-Object -Property * -ExcludeProperty PSComputerName | Format-Table -AutoSize
 

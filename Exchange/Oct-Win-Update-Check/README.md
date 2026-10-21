@@ -4,7 +4,7 @@ Drei Skripte für Exchange Server on-premises:
 
 | Skript | Zweck |
 |---|---|
-| `Check-WinOctUpdate.ps1` | Einmalige Prüfung aller Exchange Server: Uptime, kritisches Zeitfenster 24 bis 36 Stunden nach dem Boot, Registry-Wert EpmapSavedContextCap, KB5126651, Event 1006 MapiExceptionMdbOffline |
+| `Check-WinOctUpdate.ps1` | Einmalige Prüfung aller Exchange Server: Uptime, kritisches Zeitfenster 24 bis 36 Stunden nach dem Boot, Registry-Wert EpmapSavedContextCap, betroffenes Oktober-Update je Windows Server Version, Event 1006 MapiExceptionMdbOffline |
 | `ExMonitor.ps1` | Laufende Überwachung (Event 1006, Queues, Dienste, Datenbankkopien, MAPI) mit Mail bei Problem, bei Erholung und täglich als Lebenszeichen |
 | `Register-ExMonitorTask.ps1` | Richtet ExMonitor als geplante Aufgabe ein (als SYSTEM, alle 15 Minuten) |
 
@@ -85,7 +85,8 @@ Ausgabe:
 | `LastBoot`, `Uptime_h` | Letzter Neustart und Laufzeit in Stunden |
 | `Phase` | `vor 24h`, `KRITISCH (24-36h)` oder `nach 36h` seit dem Boot |
 | `Mark24h`, `Mark36h` | Zeitpunkte, an denen das kritische Zeitfenster beginnt und endet |
-| `KB5126651` | `True`, wenn das Update installiert ist |
+| `OS`, `Build` | Windows Server Version und Build inkl. Update-Stand, z.B. 17763.1234 |
+| `KB`, `KBInstalled` | Betroffenes Oktober 2026 Update dieser Version und ob es installiert ist: 2016 KB5126868 (noch nicht von Microsoft bestätigt), 2019 KB5126651, 2022 KB5126655, 2025 KB5126646. `unbekannt` bei einer anderen Windows Version. Ersetzt ein späteres kumulatives Update das Oktober-Update, kann hier wieder `False` stehen. |
 | `EpmapCap` | Registry-Wert `HKLM:\SOFTWARE\Microsoft\Rpc\EpmapSavedContextCap`, erwartet wird 65536 |
 | `Event1006`, `LastEvent` | Anzahl Event 1006 MapiExceptionMdbOffline seit dem Boot und Zeitpunkt des letzten |
 
