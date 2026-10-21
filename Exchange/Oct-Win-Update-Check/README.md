@@ -38,7 +38,27 @@ Get-ChildItem -Path $Ziel -Filter *.ps1 | Unblock-File
 Set-Location -Path $Ziel
 ```
 
-Ohne Internetzugang auf dem Server: Die drei Dateien auf einem anderen PC über "Download raw file" in der GitHub Dateiansicht herunterladen, nach `C:\Admin\Scripts\ExMonitor` kopieren und dort `Get-ChildItem -Filter *.ps1 | Unblock-File` ausführen.
+### Download blockiert (Proxy) oder kein Internetzugang
+
+Proxies wie Zscaler sperren `raw.githubusercontent.com` oft (Kategorie "FileHost"). `Invoke-WebRequest` gibt dann statt des Skripts eine HTML-Seite des Proxys als Fehler aus, z.B. mit dem Text "Not allowed to browse FileHost category". In diesem Fall:
+
+1. Den Download-Block oben auf dem eigenen PC oder Laptop ausführen, `$Ziel` dabei auf einen lokalen Ordner setzen. Alternativ in der GitHub Dateiansicht jedes Skript über "Download raw file" speichern.
+2. Die drei Dateien über die RDP-Sitzung auf den Server kopieren (im Explorer Ctrl+C auf dem PC, Ctrl+V in `C:\Admin\Scripts\ExMonitor` auf dem Server).
+3. Ist das Kopieren von Dateien über RDP gesperrt: Skript lokal öffnen, gesamten Text kopieren, auf dem Server in Notepad einfügen und mit der Kodierung **UTF-8 mit BOM** speichern (sonst zeigt Windows PowerShell 5.1 Umlaute falsch an).
+4. Auf dem Server die Dateien freigeben:
+
+```powershell
+Get-ChildItem -Path C:\Admin\Scripts\ExMonitor -Filter *.ps1 | Unblock-File
+Set-Location -Path C:\Admin\Scripts\ExMonitor
+```
+
+Kontrolle, ob alle drei Skripte vorhanden und gültig sind:
+
+```powershell
+Get-ChildItem -Path C:\Admin\Scripts\ExMonitor -Filter *.ps1 | ForEach-Object { '{0}: {1}' -f $_.Name, (Get-Help $_.FullName).Synopsis }
+```
+
+Pro Skript muss eine Zeile mit der Kurzbeschreibung erscheinen.
 
 Hilfe zu jedem Skript:
 
