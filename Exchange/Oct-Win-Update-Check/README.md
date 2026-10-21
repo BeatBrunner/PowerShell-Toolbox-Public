@@ -1,5 +1,7 @@
 # Exchange: Prüfung und Überwachung nach den Windows Oktober 2026 Updates
 
+[English version](README.en.md)
+
 Drei Skripte für Exchange Server on-premises:
 
 | Skript | Zweck |
