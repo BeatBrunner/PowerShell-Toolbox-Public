@@ -17,7 +17,7 @@ Die Skripte ändern nichts an der Exchange Konfiguration. Sie lesen nur, senden 
 - Konto mit Exchange Rolle Organization Management bzw. View-Only Organization Management (für die manuellen Tests)
 - PowerShell Remoting (WinRM) zwischen den Exchange Servern, für `Check-WinOctUpdate.ps1`
 - Remote-Eventlog-Zugriff zwischen den Exchange Servern (Firewall-Regel "Remote Event Log Management"), für `ExMonitor.ps1`
-- Mailversand: ExMonitor sendet anonym über SMTP Port 25 an die Exchange Server. Der Empfänger muss ein internes Postfach sein, die Absenderadresse eine Adresse aus einer Accepted Domain.
+- Mailversand: ExMonitor sendet anonym über SMTP Port 25 an die Exchange Server. Die Absenderadresse sollte aus einer Accepted Domain sein. In der Standardkonfiguration nimmt Exchange anonym nur Mails an interne Empfänger an; externe Empfänger gehen nur, wenn ein Receive Connector das Relay erlaubt. Am einfachsten mit `-Test` ausprobieren.
 
 ## 2. Download
 
@@ -190,7 +190,7 @@ Kommt das tägliche Lebenszeichen nicht, läuft die Überwachung nicht oder der 
 
 | Meldung im Log | Ursache und Lösung |
 |---|---|
-| `Mail via ... fehlgeschlagen` | SMTP Server lehnt ab oder ist nicht erreichbar. Prüfen, ob `-To` ein internes Postfach ist und `-From` eine Accepted Domain verwendet. Test: `Send-MailMessage -SmtpServer EX-Server01 -From exmonitor@contoso.com -To admin@contoso.com -Subject Test` |
+| `Mail via ... fehlgeschlagen` | SMTP Server lehnt ab oder ist nicht erreichbar. Prüfen, ob `-To` richtig geschrieben ist, ob `-From` eine Accepted Domain verwendet und bei externen Empfängern, ob Relay erlaubt ist (mit einem internen Postfach gegentesten). Test: `Send-MailMessage -SmtpServer EX-Server01 -From exmonitor@contoso.com -To admin@contoso.com -Subject Test` |
 | `Eventlog nicht erreichbar (Der RPC-Server ist nicht verfügbar)` | Firewall-Regel "Remote Event Log Management" auf dem Zielserver aktivieren |
 | `Exchange Cmdlets konnten nicht geladen werden` | Skript nicht auf einem Exchange Server gestartet oder bei manuellem Lauf nicht in der Exchange Management Shell |
 | `Get-Queue fehlgeschlagen`, `Test-ServiceHealth fehlgeschlagen` | Folge des vorherigen Punkts, oder fehlende Exchange Berechtigung |
