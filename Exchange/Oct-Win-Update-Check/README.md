@@ -78,7 +78,7 @@ Alternativ alle Exchange Server aus der Organisation (in der Exchange Management
 .\Check-WinOctUpdate.ps1 -ComputerName (Get-ExchangeServer).Name
 ```
 
-Ausgabe:
+Ausgabe in zwei Tabellen (Zeitfenster und Update-Stand), die CSV enthält alle Spalten:
 
 | Spalte | Bedeutung |
 |---|---|
