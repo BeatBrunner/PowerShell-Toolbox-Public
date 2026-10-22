@@ -12,7 +12,7 @@
     5. MAPI Test (erkennt Datenbanken, die mounted sind, aber nicht antworten)
 
     Mails werden gesendet beim ersten Problem, danach stündlich solange das Problem besteht,
-    bei Erholung und täglich als Lebenszeichen. Der letzte Status steht in state.txt im
+    bei Erholung und zu den Stunden aus -HeartbeatHour als Lebenszeichen. Der letzte Status steht in state.txt im
     Arbeitsordner, das Protokoll in ExMonitor_JJJJMM.log.
 
     Läuft das Skript als SYSTEM, wird das lokale Exchange Snap-in geladen (kein Remote
@@ -34,7 +34,7 @@
     Alarm ab so vielen Mails in einer Queue. Standard: 50
 
 .PARAMETER HeartbeatHour
-    Stunde für das tägliche Lebenszeichen. Standard: 7
+    Stunde(n) für das Lebenszeichen, mehrere mit Komma getrennt (z.B. 7, 12, 17). Standard: 7
 
 .PARAMETER WorkDir
     Ordner für Statusdatei und Log. Standard: C:\Admin\Scripts\ExMonitor
@@ -57,7 +57,7 @@
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.4
+    Version: 1.5
     Läuft in Windows PowerShell 5.1 auf einem Exchange Server (Exchange Cmdlets nötig).
 #>
 #Requires -Version 5.1
@@ -77,7 +77,7 @@ param(
     [int]$QueueMax = 50,
 
     [ValidateRange(0, 23)]
-    [int]$HeartbeatHour = 7,
+    [int[]]$HeartbeatHour = 7,
 
     [string]$WorkDir = 'C:\Admin\Scripts\ExMonitor',
 
@@ -241,8 +241,8 @@ elseif ($State -eq 'PROBLEM') {
 elseif ($Prev -eq 'PROBLEM') {
     Send-Alert -Subject 'ExMonitor: wieder OK' -Body "Alle Prüfungen sind seit $Ts wieder OK.`r`n`r`n$Detail"
 }
-elseif ($Now.Hour -eq $HeartbeatHour -and $Now.Minute -lt 15) {
-    Send-Alert -Subject 'ExMonitor: OK (täglich)' -Body "ExMonitor läuft, $Ts`r`n`r`n$Detail"
+elseif ($Now.Hour -in $HeartbeatHour -and $Now.Minute -lt 15) {
+    Send-Alert -Subject 'ExMonitor: OK (Lebenszeichen)' -Body "ExMonitor läuft, $Ts`r`n`r`n$Detail"
 }
 
 # Statusdatei: Zeile 1 = Status (wird beim nächsten Lauf gelesen), danach Details

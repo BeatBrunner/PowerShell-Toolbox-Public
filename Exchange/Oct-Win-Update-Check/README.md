@@ -7,7 +7,7 @@ Drei Skripte für Exchange Server on-premises:
 | Skript | Zweck |
 |---|---|
 | `Check-WinOctUpdate.ps1` | Einmalige Prüfung aller Exchange Server: Uptime, kritisches Zeitfenster 24 bis 36 Stunden nach dem Boot, Registry-Wert EpmapSavedContextCap, betroffenes Oktober-Update je Windows Server Version, Event 1006 MapiExceptionMdbOffline |
-| `ExMonitor.ps1` | Laufende Überwachung (Event 1006, Queues, Dienste, Datenbankkopien, MAPI) mit Mail bei Problem, bei Erholung und täglich als Lebenszeichen |
+| `ExMonitor.ps1` | Laufende Überwachung (Event 1006, Queues, Dienste, Datenbankkopien, MAPI) mit Mail bei Problem, bei Erholung und als Lebenszeichen zu festen Stunden |
 | `Register-ExMonitorTask.ps1` | Richtet ExMonitor als geplante Aufgabe ein (als SYSTEM, alle 15 Minuten) |
 
 Die Skripte ändern nichts an der Exchange Konfiguration. Sie lesen nur, senden Mails und schreiben Logs nach `C:\Admin\Scripts\`.
@@ -132,7 +132,7 @@ Weitere Parameter:
 |---|---|---|
 | `-SmtpHosts` | Werte aus `-Servers` | SMTP Server für den Mailversand, werden der Reihe nach versucht |
 | `-QueueMax` | 50 | Alarm ab so vielen Mails in einer Queue |
-| `-HeartbeatHour` | 7 | Stunde für das tägliche Lebenszeichen |
+| `-HeartbeatHour` | 7 | Stunde(n) für das Lebenszeichen, mehrere mit Komma, z.B. `7, 12, 17` |
 | `-WorkDir` | `C:\Admin\Scripts\ExMonitor` | Ordner für Log und Statusdatei |
 
 ## 5. Register-ExMonitorTask.ps1: geplante Aufgabe einrichten
@@ -151,7 +151,7 @@ Schritt 2, einrichten:
 .\Register-ExMonitorTask.ps1 -Servers EX-Server01, EX-Server02 -To admin@contoso.com -From exmonitor@contoso.com
 ```
 
-Die Aufgabe heisst `ExMonitor` im Ordner `\iTrain\` der Aufgabenplanung und läuft ab der nächsten Viertelstunde alle 15 Minuten als SYSTEM. Liegt ExMonitor.ps1 nicht in `C:\Admin\Scripts\ExMonitor`, den Pfad mit `-ScriptPath` angeben. Eine bereits vorhandene Aufgabe wird vorher als XML nach `C:\Admin\Scripts\Register-ExMonitorTask\` gesichert und dann überschrieben. Für geänderte Empfänger oder Server das Skript einfach erneut ausführen.
+Die Aufgabe heisst `ExMonitor` im Ordner `\iTrain\` der Aufgabenplanung und läuft ab der nächsten Viertelstunde alle 15 Minuten als SYSTEM. Liegt ExMonitor.ps1 nicht in `C:\Admin\Scripts\ExMonitor`, den Pfad mit `-ScriptPath` angeben. Eine bereits vorhandene Aufgabe wird vorher als XML nach `C:\Admin\Scripts\Register-ExMonitorTask\` gesichert und dann überschrieben. Für geänderte Empfänger oder Server das Skript einfach erneut ausführen. Mehrere Lebenszeichen pro Tag mit `-HeartbeatHour`, z.B. `-HeartbeatHour 7, 17` für 07:00 und 17:00.
 
 Schritt 3, sofort einmal starten und prüfen:
 
@@ -176,7 +176,7 @@ Die Statusdatei `C:\Admin\Scripts\ExMonitor\state.txt` zeigt jederzeit das Ergeb
 | Problem neu erkannt | Sofort `ExMonitor: PROBLEM` |
 | Problem besteht weiter | Einmal pro Stunde (Lauf in den ersten 15 Minuten der Stunde) erneut `ExMonitor: PROBLEM` |
 | Problem behoben | `ExMonitor: wieder OK` |
-| Alles OK | Täglich um 07:00 `ExMonitor: OK (täglich)` |
+| Alles OK | Zu jeder Stunde aus `-HeartbeatHour` (Standard 07:00) `ExMonitor: OK (Lebenszeichen)` |
 | Aufruf mit `-Test` | Immer `ExMonitor: TEST (...)` |
 
 Geprüft wird pro Server:
@@ -187,7 +187,7 @@ Geprüft wird pro Server:
 4. Status der Datenbankkopien (erwartet Mounted oder Healthy)
 5. MAPI Test (`Test-MAPIConnectivity`), erkennt Datenbanken, die mounted sind, aber nicht antworten
 
-Kommt das tägliche Lebenszeichen nicht, läuft die Überwachung nicht oder der Mailversand funktioniert nicht.
+Kommt das Lebenszeichen nicht, läuft die Überwachung nicht oder der Mailversand funktioniert nicht.
 
 ## 7. Fehlersuche
 

@@ -7,7 +7,7 @@ Three scripts for Exchange Server on-premises:
 | Script | Purpose |
 |---|---|
 | `Check-WinOctUpdate.ps1` | One-time check of all Exchange servers: uptime, critical time window 24 to 36 hours after boot, registry value EpmapSavedContextCap, affected October update per Windows Server version, event 1006 MapiExceptionMdbOffline |
-| `ExMonitor.ps1` | Continuous monitoring (event 1006, queues, services, database copies, MAPI) with email on problem, on recovery and a daily heartbeat |
+| `ExMonitor.ps1` | Continuous monitoring (event 1006, queues, services, database copies, MAPI) with email on problem, on recovery and a heartbeat at set hours |
 | `Register-ExMonitorTask.ps1` | Sets up ExMonitor as a scheduled task (as SYSTEM, every 15 minutes) |
 
 The scripts do not change the Exchange configuration. They only read, send emails and write logs to `C:\Admin\Scripts\`.
@@ -128,7 +128,7 @@ Further parameters:
 |---|---|---|
 | `-SmtpHosts` | Values of `-Servers` | SMTP servers for sending email, tried in order |
 | `-QueueMax` | 50 | Alert when a queue holds more messages than this |
-| `-HeartbeatHour` | 7 | Hour of the daily heartbeat |
+| `-HeartbeatHour` | 7 | Hour(s) of the heartbeat, several separated by commas, e.g. `7, 12, 17` |
 | `-WorkDir` | `C:\Admin\Scripts\ExMonitor` | Folder for log and status file |
 
 ## 5. Register-ExMonitorTask.ps1: set up the scheduled task
@@ -147,7 +147,7 @@ Step 2, set it up:
 .\Register-ExMonitorTask.ps1 -Servers EX-Server01, EX-Server02 -To admin@contoso.com -From exmonitor@contoso.com
 ```
 
-The task is called `ExMonitor` in the folder `\iTrain\` of Task Scheduler and runs as SYSTEM every 15 minutes, starting at the next quarter hour. If ExMonitor.ps1 is not located in `C:\Admin\Scripts\ExMonitor`, specify the path with `-ScriptPath`. An existing task is first backed up as XML to `C:\Admin\Scripts\Register-ExMonitorTask\` and then overwritten. To change recipients or servers, simply run the script again.
+The task is called `ExMonitor` in the folder `\iTrain\` of Task Scheduler and runs as SYSTEM every 15 minutes, starting at the next quarter hour. If ExMonitor.ps1 is not located in `C:\Admin\Scripts\ExMonitor`, specify the path with `-ScriptPath`. An existing task is first backed up as XML to `C:\Admin\Scripts\Register-ExMonitorTask\` and then overwritten. To change recipients or servers, simply run the script again. For several heartbeats per day use `-HeartbeatHour`, e.g. `-HeartbeatHour 7, 17` for 07:00 and 17:00.
 
 Step 3, start it once right away and check:
 
@@ -172,7 +172,7 @@ The status file `C:\Admin\Scripts\ExMonitor\state.txt` always shows the result o
 | New problem detected | Immediately `ExMonitor: PROBLEM` |
 | Problem persists | Once per hour (run within the first 15 minutes of the hour) another `ExMonitor: PROBLEM` |
 | Problem resolved | `ExMonitor: wieder OK` (OK again) |
-| Everything OK | Daily at 07:00 `ExMonitor: OK (täglich)` (daily) |
+| Everything OK | At every hour in `-HeartbeatHour` (default 07:00) `ExMonitor: OK (Lebenszeichen)` (heartbeat) |
 | Run with `-Test` | Always `ExMonitor: TEST (...)` |
 
 Checked for each server:
@@ -183,7 +183,7 @@ Checked for each server:
 4. Status of the database copies (Mounted or Healthy expected)
 5. MAPI test (`Test-MAPIConnectivity`), detects databases that are mounted but do not respond
 
-If the daily heartbeat does not arrive, either the monitoring is not running or sending email does not work.
+If the heartbeat does not arrive, either the monitoring is not running or sending email does not work.
 
 ## 7. Troubleshooting
 

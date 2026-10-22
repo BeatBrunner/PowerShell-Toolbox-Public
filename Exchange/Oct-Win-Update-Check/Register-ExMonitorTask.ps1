@@ -29,6 +29,10 @@
 .PARAMETER SmtpHosts
     Optionale SMTP Server für den Mailversand (wird an ExMonitor.ps1 übergeben).
 
+.PARAMETER HeartbeatHour
+    Optionale Stunde(n) für das Lebenszeichen, z.B. 7, 12, 17 (wird an ExMonitor.ps1 übergeben).
+    Ohne Angabe gilt der Standard von ExMonitor.ps1 (7 Uhr).
+
 .PARAMETER TaskName
     Name der geplanten Aufgabe. Standard: ExMonitor
 
@@ -46,13 +50,17 @@
     Zeigt nur an, welche Aufgabe registriert würde.
 
 .EXAMPLE
+    .\Register-ExMonitorTask.ps1 -Servers EX-Server01, EX-Server02 -To admin@contoso.com -From exmonitor@contoso.com -HeartbeatHour 7, 17
+    Lebenszeichen täglich um 07:00 und 17:00.
+
+.EXAMPLE
     Start-ScheduledTask -TaskPath '\iTrain\' -TaskName 'ExMonitor'
     Startet die Aufgabe nach der Registrierung sofort einmal; Ergebnis im Log von ExMonitor prüfen.
 
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.1
+    Version: 1.2
     Als Administrator auf dem Exchange Server ausführen, der die Überwachung übernimmt.
     Windows Server 2016 oder neuer (Wiederholung ohne Enddatum).
 #>
@@ -71,6 +79,9 @@ param(
     [string]$From,
 
     [string[]]$SmtpHosts,
+
+    [ValidateRange(0, 23)]
+    [int[]]$HeartbeatHour,
 
     [string]$TaskName = 'ExMonitor',
 
@@ -99,6 +110,7 @@ if (-not (Test-Path -Path $ScriptPath -PathType Leaf)) {
 # Mit -Command statt -File, sonst kommen Listen wie 'EX1,EX2' als ein einziger String an
 $Command = "& $(ConvertTo-Literal $ScriptPath) -Servers $(ConvertTo-Literal $Servers) -To $(ConvertTo-Literal $To) -From $(ConvertTo-Literal $From)"
 if ($SmtpHosts) { $Command += " -SmtpHosts $(ConvertTo-Literal $SmtpHosts)" }
+if ($HeartbeatHour) { $Command += " -HeartbeatHour $($HeartbeatHour -join ',')" }
 $Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command `"$Command`""
 
 # Erster Lauf zur nächsten Viertelstunde
