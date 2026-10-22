@@ -57,7 +57,7 @@
 .NOTES
     Author:  iTrain GmbH, info@itrain.ch
     Created: 21.10.2026
-    Version: 1.5
+    Version: 1.6
     Läuft in Windows PowerShell 5.1 auf einem Exchange Server (Exchange Cmdlets nötig).
 #>
 #Requires -Version 5.1
@@ -76,8 +76,9 @@ param(
 
     [int]$QueueMax = 50,
 
+    # Mehrere Stunden als Standard nur in @(), z.B. @(7, 12, 17)
     [ValidateRange(0, 23)]
-    [int[]]$HeartbeatHour = 7,
+    [int[]]$HeartbeatHour = @(7),
 
     [string]$WorkDir = 'C:\Admin\Scripts\ExMonitor',
 
